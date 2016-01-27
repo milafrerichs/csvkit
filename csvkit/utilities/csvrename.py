@@ -42,32 +42,21 @@ class CSVRename(CSVKitUtility):
 
         output = agate.writer(self.output_file, **self.writer_kwargs)
 
-        columns = []
+        columns = None
         if self.args.names:
             new_column_names = self.args.names.split(',')
-            if len(new_column_names) == len(column_names):
-                for c in new_column_names:
-                    c = c.strip()
-                    try:
-                        columns.append(c)
-                    except ColumnIdentifierError:
-                        raise
-            elif self.args.columns:
+            if self.args.columns:
                 old_column_names = self.args.columns.split(',')
-                for c in column_names:
-                    include = False
-                    for idx, oc in enumerate(old_column_names):
-                        if(c == oc):
-                            include = new_column_names[idx]
-                    if include:
-                        columns.append(include)
-                    else:
-                        columns.append(c)
+                columns = dict(zip(old_column_names, new_column_names))
             else:
-                columns = column_names
-        else:
-            columns = column_names
-        output.writerow(columns)
+                if len(new_column_names) == len(column_names):
+                    columns = dict(zip(column_names, new_column_names))
+
+
+        if isinstance(columns, dict):
+            column_names = [columns[name] if name in columns else name for name in column_names]
+
+        output.writerow(column_names)
 
         for row in rows:
             output.writerow(row)
